@@ -1721,23 +1721,17 @@ function shouldShowBanner() {
 }
 
 // Main initialization function
+// Updated initializeCookieConsent function
 function initializeCookieConsent(detectedCookies, language) {
- const consentGiven = getCookie('cookie_consent');
-const consentData = consentGiven ? JSON.parse(consentGiven) : null;
-const geoAllowed = checkGeoTargeting(locationData);
-const bannerShouldBeShown = geoAllowed && shouldShowBanner();
+    const consentGiven = getCookie('cookie_consent');
+    const geoAllowed = checkGeoTargeting(locationData);
     
-if ((!consentGiven || (consentData && consentData.status === 'dismissed')) && config.behavior.autoShow && bannerShouldBeShown) {
-    setTimeout(() => {
+    // Always show banner if no consent given, regardless of autoShow setting
+    if (!consentGiven && geoAllowed) {
         showCookieBanner();
-    }, config.behavior.bannerDelay * 1000);
-} else if (consentGiven) {
-    updateConsentMode(consentData);
-    loadCookiesAccordingToConsent(consentData);
-    if (config.behavior.showFloatingButton) {
-        showFloatingButton();
-    }
-}else if (consentGiven) {
+    } 
+    // If consent was given, update consent mode and load cookies
+    else if (consentGiven) {
         const consentData = JSON.parse(consentGiven);
         updateConsentMode(consentData);
         loadCookiesAccordingToConsent(consentData);
@@ -1826,34 +1820,6 @@ if ((!consentGiven || (consentData && consentData.status === 'dismissed')) && co
             }
         }, config.behavior.bannerSchedule.durationMinutes * 60 * 1000);
     }
-}
-
-
-
-function hideCookieBanner() {
-    const banner = document.getElementById('cookieConsentBanner');
-    banner.classList.remove('show');
-    setTimeout(() => {
-        banner.style.display = 'none';
-        
-        // Set a dismissed status if no consent was given
-        if (!getCookie('cookie_consent')) {
-            const consentData = {
-                status: 'dismissed',
-                gcs: 'G100',
-                categories: {
-                    functional: false,
-                    analytics: false,
-                    performance: false,
-                    advertising: false,
-                    uncategorized: false
-                },
-                timestamp: new Date().getTime()
-            };
-            setCookie('cookie_consent', JSON.stringify(consentData), 365);
-        }
-    }, 400);
-    bannerShown = false;
 }
 
 // Setup password prompt events
@@ -2350,6 +2316,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         await fetchLocationData();
     }  
    
+   // Modified initialization code
+function initializeCookieConsentScript() {
     if (!isDomainAllowed()) {
         console.log('Cookie consent banner not shown - domain not allowed');
         return;
@@ -2361,53 +2329,59 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     setDefaultUetConsent();
 
-    await fetchLocationData();
-    
-    const geoAllowed = checkGeoTargeting(locationData);
-    if (!geoAllowed) {
-        console.log('Cookie consent banner not shown - geo-targeting restriction');
-        return;
-    }
+    fetchLocationData().then(() => {
+        const geoAllowed = checkGeoTargeting(locationData);
+        if (!geoAllowed) {
+            console.log('Cookie consent banner not shown - geo-targeting restriction');
+            return;
+        }
 
-    const detectedCookies = scanAndCategorizeCookies();
-    const userLanguage = detectUserLanguage(locationData);
+        const detectedCookies = scanAndCategorizeCookies();
+        const userLanguage = detectUserLanguage(locationData);
 
-    injectConsentHTML(detectedCookies, userLanguage);
-    initializeCookieConsent(detectedCookies, userLanguage);
+        injectConsentHTML(detectedCookies, userLanguage);
+        initializeCookieConsent(detectedCookies, userLanguage);
 
-    if (config.behavior.acceptOnScroll) {
-        let scrollTimeout;
-        window.addEventListener('scroll', function() {
-            if (!getCookie('cookie_consent') && bannerShown) {
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(function() {
-                    const scrollPercentage = (window.scrollY + window.innerHeight) / document.body.scrollHeight * 100;
-                    if (scrollPercentage > 30) {
-                        acceptAllCookies();
-                        hideCookieBanner();
-                        if (config.behavior.showFloatingButton) {
-                            showFloatingButton();
+        if (config.behavior.acceptOnScroll) {
+            let scrollTimeout;
+            window.addEventListener('scroll', function() {
+                if (!getCookie('cookie_consent') && bannerShown) {
+                    clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(function() {
+                        const scrollPercentage = (window.scrollY + window.innerHeight) / document.body.scrollHeight * 100;
+                        if (scrollPercentage > 30) {
+                            acceptAllCookies();
+                            hideCookieBanner();
+                            if (config.behavior.showFloatingButton) {
+                                showFloatingButton();
+                            }
                         }
-                    }
-                }, 200);
-            }
-        });
-    }
-
-    if (config.behavior.acceptOnContinue) {
-        document.addEventListener('click', function(e) {
-            if (!getCookie('cookie_consent') && bannerShown && 
-                !e.target.closest('#cookieConsentBanner') && 
-                !e.target.closest('#cookieSettingsModal')) {
-                acceptAllCookies();
-                hideCookieBanner();
-                if (config.behavior.showFloatingButton) {
-                    showFloatingButton();
+                    }, 200);
                 }
-            }
-        });
-    }
-});
+            });
+        }
+
+        if (config.behavior.acceptOnContinue) {
+            document.addEventListener('click', function(e) {
+                if (!getCookie('cookie_consent') && bannerShown && 
+                    !e.target.closest('#cookieConsentBanner') && 
+                    !e.target.closest('#cookieSettingsModal')) {
+                    acceptAllCookies();
+                    hideCookieBanner();
+                    if (config.behavior.showFloatingButton) {
+                        showFloatingButton();
+                    }
+                }
+            });
+        }
+    });
+}
+
+// Run immediately for Tag Manager preview
+initializeCookieConsentScript();
+
+// Also keep the DOMContentLoaded listener for normal page loads
+document.addEventListener('DOMContentLoaded', initializeCookieConsentScript);
 
 // Export functions for global access if needed
 if (typeof window !== 'undefined') {
