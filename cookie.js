@@ -1256,6 +1256,12 @@ function injectConsentHTML(detectedCookies, language = 'en') {
 
 // Check if banner should be shown based on schedule
 function shouldShowBanner() {
+
+      // Always show in GTM preview mode
+    if (window.location.search.includes('gtm_debug')) {
+        return true;
+    }
+    
     if (!config.behavior.bannerSchedule.enabled) {
         return true;
     }
