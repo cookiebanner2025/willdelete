@@ -171,7 +171,6 @@
     color: #000000;
     /* border: 1px solid #0000002b; */
     text-decoration: underline;
-    margin-left: -16px;
 }
 
 .main-save-btn:hover {
@@ -914,7 +913,7 @@ input:disabled + .toggle-slider {
     /* Updated button arrangement for mobile */
     .all-cookie-consent-buttons {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         gap: 12px;
     }
     
@@ -922,28 +921,19 @@ input:disabled + .toggle-slider {
         width: 100%;
         margin-bottom: 0;
     }
-
-
-
-
-    .ccc {
-
-      margin-left: -36px;
-      margin-top: -10px;
-    }
     
     /* Specific order for mobile buttons */
     #acceptAllBtn {
-        order: 3;
+        order: 1;
         margin-left: -1px;
     }
     
     #adjustConsentBtn {
-        order: 1;
+        order: 2;
     }
     
     #rejectAllBtn {
-        order: 2;
+        order: 3;
     }
     
     .cookie-settings-header {
@@ -959,7 +949,7 @@ input:disabled + .toggle-slider {
     }
     
     .modal-buttons-container {
-        flex-direction: row;
+        flex-direction: column;
     }
     
     .modal-buttons-container .cookie-btn {
@@ -994,8 +984,8 @@ input:disabled + .toggle-slider {
     .cookie-consent-banner {
         padding: 15px;
         flex-direction: column;
-        width: calc(100% - 20px);
-        left: 12px;
+        width: calc(100% - 30px);
+        left: 15px;
     }
     
 /* .main-accept-button {
@@ -1070,3 +1060,4 @@ input:disabled + .toggle-slider {
         padding: 8px 10px;
     }
 }
+
