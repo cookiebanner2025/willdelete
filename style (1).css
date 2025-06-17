@@ -913,7 +913,7 @@ input:disabled + .toggle-slider {
     /* Updated button arrangement for mobile */
     .all-cookie-consent-buttons {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         gap: 12px;
     }
     
