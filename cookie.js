@@ -859,12 +859,6 @@ function generatePasswordPrompt(language = 'en') {
 
 // Check if current domain is allowed
 function isDomainAllowed() {
-
-     // Always allow in GTM preview
-    if (window.location.hostname.includes('googletagmanager.com')) {
-        return true;
-    }
-    
     if (config.allowedDomains.length === 0) return true;
     
     const currentDomain = window.location.hostname;
@@ -1262,12 +1256,6 @@ function injectConsentHTML(detectedCookies, language = 'en') {
 
 // Check if banner should be shown based on schedule
 function shouldShowBanner() {
-
-      // Always show in GTM preview mode
-    if (window.location.search.includes('gtm_debug')) {
-        return true;
-    }
-    
     if (!config.behavior.bannerSchedule.enabled) {
         return true;
     }
@@ -1330,8 +1318,7 @@ function shouldShowBanner() {
 
 // Main initialization function
 function initializeCookieConsent(detectedCookies, language) {
-  const isGTMPreview = window.location.search.includes('gtm_debug');
-    const consentGiven = isGTMPreview ? null : getCookie('cookie_consent');
+    const consentGiven = getCookie('cookie_consent');
     
     const geoAllowed = checkGeoTargeting(locationData);
     const bannerShouldBeShown = geoAllowed && shouldShowBanner();
@@ -1918,25 +1905,6 @@ function loadAdvertisingCookies() {
 function loadPerformanceCookies() {
     console.log('Loading performance cookies');
 }
-
-// Force show banner in GTM preview mode
-if (window.location.search.includes('gtm_debug')) {
-    config.behavior.autoShow = true;
-    config.behavior.bannerDelay = 0;
-    deleteCookie('cookie_consent'); // Force banner to show
-}
-
-// Helper function to delete cookies
-function deleteCookie(name) {
-    document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=' + window.location.hostname;
-}
-
-
-
-
-
-
-
 
 // Main execution flow
 document.addEventListener('DOMContentLoaded', async function() {
