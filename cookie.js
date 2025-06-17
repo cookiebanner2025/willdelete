@@ -2316,8 +2316,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         await fetchLocationData();
     }  
    
-   // Modified initialization code
-function initializeCookieConsentScript() {
     if (!isDomainAllowed()) {
         console.log('Cookie consent banner not shown - domain not allowed');
         return;
@@ -2329,59 +2327,54 @@ function initializeCookieConsentScript() {
 
     setDefaultUetConsent();
 
-    fetchLocationData().then(() => {
-        const geoAllowed = checkGeoTargeting(locationData);
-        if (!geoAllowed) {
-            console.log('Cookie consent banner not shown - geo-targeting restriction');
-            return;
-        }
+    await fetchLocationData();
+    
+    const geoAllowed = checkGeoTargeting(locationData);
+    if (!geoAllowed) {
+        console.log('Cookie consent banner not shown - geo-targeting restriction');
+        return;
+    }
 
-        const detectedCookies = scanAndCategorizeCookies();
-        const userLanguage = detectUserLanguage(locationData);
+    const detectedCookies = scanAndCategorizeCookies();
+    const userLanguage = detectUserLanguage(locationData);
 
-        injectConsentHTML(detectedCookies, userLanguage);
-        initializeCookieConsent(detectedCookies, userLanguage);
+    injectConsentHTML(detectedCookies, userLanguage);
+    initializeCookieConsent(detectedCookies, userLanguage);
 
-        if (config.behavior.acceptOnScroll) {
-            let scrollTimeout;
-            window.addEventListener('scroll', function() {
-                if (!getCookie('cookie_consent') && bannerShown) {
-                    clearTimeout(scrollTimeout);
-                    scrollTimeout = setTimeout(function() {
-                        const scrollPercentage = (window.scrollY + window.innerHeight) / document.body.scrollHeight * 100;
-                        if (scrollPercentage > 30) {
-                            acceptAllCookies();
-                            hideCookieBanner();
-                            if (config.behavior.showFloatingButton) {
-                                showFloatingButton();
-                            }
+    if (config.behavior.acceptOnScroll) {
+        let scrollTimeout;
+        window.addEventListener('scroll', function() {
+            if (!getCookie('cookie_consent') && bannerShown) {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(function() {
+                    const scrollPercentage = (window.scrollY + window.innerHeight) / document.body.scrollHeight * 100;
+                    if (scrollPercentage > 30) {
+                        acceptAllCookies();
+                        hideCookieBanner();
+                        if (config.behavior.showFloatingButton) {
+                            showFloatingButton();
                         }
-                    }, 200);
-                }
-            });
-        }
-
-        if (config.behavior.acceptOnContinue) {
-            document.addEventListener('click', function(e) {
-                if (!getCookie('cookie_consent') && bannerShown && 
-                    !e.target.closest('#cookieConsentBanner') && 
-                    !e.target.closest('#cookieSettingsModal')) {
-                    acceptAllCookies();
-                    hideCookieBanner();
-                    if (config.behavior.showFloatingButton) {
-                        showFloatingButton();
                     }
+                }, 200);
+            }
+        });
+    }
+
+    if (config.behavior.acceptOnContinue) {
+        document.addEventListener('click', function(e) {
+            if (!getCookie('cookie_consent') && bannerShown && 
+                !e.target.closest('#cookieConsentBanner') && 
+                !e.target.closest('#cookieSettingsModal')) {
+                acceptAllCookies();
+                hideCookieBanner();
+                if (config.behavior.showFloatingButton) {
+                    showFloatingButton();
                 }
-            });
-        }
-    });
-}
+            }
+        });
+    }
+});
 
-// Run immediately for Tag Manager preview
-initializeCookieConsentScript();
-
-// Also keep the DOMContentLoaded listener for normal page loads
-document.addEventListener('DOMContentLoaded', initializeCookieConsentScript);
 
 // Export functions for global access if needed
 if (typeof window !== 'undefined') {
