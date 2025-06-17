@@ -297,12 +297,12 @@ function gtag() { dataLayer.push(arguments); }
 
 // Set default consent (deny all except security) AND initial GCS signal
 gtag('consent', 'default', {
-    'ad_storage': 'denied',
-    'analytics_storage': 'denied',
-    'ad_user_data': 'denied',
-    'ad_personalization': 'denied',
-    'personalization_storage': 'denied',
-    'functionality_storage': 'denied',
+    'ad_storage': 'granted',
+    'analytics_storage': 'granted',
+    'ad_user_data': 'granted',
+    'ad_personalization': 'granted',
+    'personalization_storage': 'granted',
+    'functionality_storage': 'granted',
     'security_storage': 'granted'
 });
 
@@ -310,39 +310,36 @@ gtag('consent', 'default', {
 window.dataLayer.push({
     'event': 'initial_consent_state',
     'consent_mode': {
-        'ad_storage': 'denied',
-        'analytics_storage': 'denied',
-        'ad_user_data': 'denied',
-        'ad_personalization': 'denied',
-        'personalization_storage': 'denied',
-        'functionality_storage': 'denied',
+        'ad_storage': 'granted',
+        'analytics_storage': 'granted',
+        'ad_user_data': 'granted',
+        'ad_personalization': 'granted',
+        'personalization_storage': 'granted',
+        'functionality_storage': 'granted',
         'security_storage': 'granted'
     },
-    'gcs': 'G100', // Explicit initial GCS signal
+    'gcs': 'G111', // Changed from G100 to G111
     'timestamp': new Date().toISOString()
 });
 
 // Set default UET consent
 function setDefaultUetConsent() {
     if (!config.uetConfig.enabled) return;
-    // Redundant safeguard
-    if (typeof window.uetq === 'undefined') window.uetq = [];
-    const consentState = config.uetConfig.defaultConsent === 'granted' ? 'granted' : 'denied';
     
+    // Change this to granted by default
     window.uetq.push('consent', 'default', {
-        'ad_storage': consentState
+        'ad_storage': 'granted'
     });
     
-    // Push to dataLayer with GCS alignment
     window.dataLayer.push({
         'event': 'uet_consent_default',
         'consent_mode': {
-            'ad_storage': consentState,
-            'analytics_storage': 'denied', // Mirroring GCS initial state
-            'ad_user_data': 'denied',
-            'ad_personalization': 'denied'
+            'ad_storage': 'granted',
+            'analytics_storage': 'granted', // Also granted here
+            'ad_user_data': 'granted',
+            'ad_personalization': 'granted'
         },
-        'gcs': 'G100', // Aligned with initial GCS signal
+        'gcs': 'G111', // Changed from G100 to G111
         'timestamp': new Date().toISOString()
     });
 }
@@ -1320,14 +1317,36 @@ function shouldShowBanner() {
 function initializeCookieConsent(detectedCookies, language) {
     const consentGiven = getCookie('cookie_consent');
     
-    const geoAllowed = checkGeoTargeting(locationData);
-    const bannerShouldBeShown = geoAllowed && shouldShowBanner();
-    
-    if (!consentGiven && config.behavior.autoShow && bannerShouldBeShown) {
-        setTimeout(() => {
-            showCookieBanner();
-        }, config.behavior.bannerDelay * 1000);
-    } else if (consentGiven) {
+    // If no consent cookie exists, we'll treat it as accepted (G111)
+    if (!consentGiven) {
+        const consentData = {
+            status: 'accepted',
+            gcs: 'G111',
+            categories: {
+                functional: true,
+                analytics: true,
+                performance: true,
+                advertising: true,
+                uncategorized: true
+            },
+            timestamp: new Date().getTime()
+        };
+        
+        updateConsentMode(consentData);
+        loadCookiesAccordingToConsent(consentData);
+        
+        if (config.behavior.showFloatingButton) {
+            showFloatingButton();
+        }
+        
+        // Don't show banner if autoShow is false
+        if (config.behavior.autoShow && shouldShowBanner()) {
+            setTimeout(() => {
+                showCookieBanner();
+            }, config.behavior.bannerDelay * 1000);
+        }
+    } else {
+        // Existing consent cookie handling remains the same
         const consentData = JSON.parse(consentGiven);
         updateConsentMode(consentData);
         loadCookiesAccordingToConsent(consentData);
@@ -1508,6 +1527,7 @@ function setupEventListeners() {
 }
 
 // Show/hide functions with animations
+// In the showCookieBanner function, pre-check the checkboxes:
 function showCookieBanner() {
     const banner = document.getElementById('cookieConsentBanner');
     banner.style.display = 'block';
@@ -1515,6 +1535,13 @@ function showCookieBanner() {
         banner.classList.add('show');
     }, 10);
     bannerShown = true;
+    
+    // Pre-check all checkboxes in settings modal
+    document.querySelectorAll('input[data-category]').forEach(input => {
+        if (input.dataset.category !== 'functional') { // Functional is always checked and disabled
+            input.checked = true;
+        }
+    });
 }
 
 function hideCookieBanner() {
