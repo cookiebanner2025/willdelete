@@ -859,6 +859,12 @@ function generatePasswordPrompt(language = 'en') {
 
 // Check if current domain is allowed
 function isDomainAllowed() {
+
+     // Always allow in GTM preview
+    if (window.location.hostname.includes('googletagmanager.com')) {
+        return true;
+    }
+    
     if (config.allowedDomains.length === 0) return true;
     
     const currentDomain = window.location.hostname;
