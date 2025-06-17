@@ -111,6 +111,7 @@
     text-decoration: underline;
     padding-right: 146px;
     border: none;
+    margin-top: -8px;
 }
 
 .top-adjust-button:hover {
